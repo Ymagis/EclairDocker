@@ -1,0 +1,17 @@
+language: python
+
+services:
+  - docker
+
+env:
+  - IMAGE=ffmpeg
+  - IMAGE=asdcplib
+
+install:
+    - pip install awscli
+    - eval $(aws ecr get-login --region eu-west-1 --no-include-email)
+
+script:
+    - export VERSION="$(cat $IMAGE/version)"
+    - docker build -t $IMAGE .
+    - bash .travis/docker-push.sh $ECR_URL $IMAGE $VERSION latest

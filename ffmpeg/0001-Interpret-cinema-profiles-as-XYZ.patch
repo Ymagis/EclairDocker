@@ -1,0 +1,74 @@
+From 2f2c230bb7636d56d8a68cc4445c60ec5c70815d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?R=C3=A9mi=20Achard?= <remi.achard@ymagis.com>
+Date: Fri, 7 Jun 2019 16:20:11 +0200
+Subject: [PATCH] Interpret cinema profiles as XYZ
+
+---
+ libavcodec/libopenjpegdec.c | 44 +++++++++++++++++++++++++++-----------------
+ 1 file changed, 27 insertions(+), 17 deletions(-)
+
+diff --git a/libavcodec/libopenjpegdec.c b/libavcodec/libopenjpegdec.c
+index 344c5ba5a3..5516a1c3e1 100644
+--- a/libavcodec/libopenjpegdec.c
++++ b/libavcodec/libopenjpegdec.c
+@@ -71,6 +71,10 @@ static const enum AVPixelFormat libopenjpeg_gray_pix_fmts[] = {
+ static const enum AVPixelFormat libopenjpeg_yuv_pix_fmts[]  = {
+     YUV_PIXEL_FORMATS
+ };
++static const enum AVPixelFormat libopenjpeg_xyz_pix_fmts[]  = {
++    XYZ_PIXEL_FORMATS,
++    YUV_PIXEL_FORMATS
++};
+ static const enum AVPixelFormat libopenjpeg_all_pix_fmts[]  = {
+     RGB_PIXEL_FORMATS, GRAY_PIXEL_FORMATS, YUV_PIXEL_FORMATS, XYZ_PIXEL_FORMATS
+ };
+@@ -196,23 +200,29 @@ static inline enum AVPixelFormat libopenjpeg_guess_pix_fmt(const opj_image_t *im
+     const enum AVPixelFormat *possible_fmts = NULL;
+     int possible_fmts_nb = 0;
+ 
+-    switch (image->color_space) {
+-    case OPJ_CLRSPC_SRGB:
+-        possible_fmts    = libopenjpeg_rgb_pix_fmts;
+-        possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_rgb_pix_fmts);
+-        break;
+-    case OPJ_CLRSPC_GRAY:
+-        possible_fmts    = libopenjpeg_gray_pix_fmts;
+-        possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_gray_pix_fmts);
+-        break;
+-    case OPJ_CLRSPC_SYCC:
+-        possible_fmts    = libopenjpeg_yuv_pix_fmts;
+-        possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_yuv_pix_fmts);
+-        break;
+-    default:
+-        possible_fmts    = libopenjpeg_all_pix_fmts;
+-        possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_all_pix_fmts);
+-        break;
++    if (image->rsiz == FF_PROFILE_JPEG2000_DCINEMA_2K ||
++        image->rsiz == FF_PROFILE_JPEG2000_DCINEMA_4K) {
++        possible_fmts = libopenjpeg_xyz_pix_fmts;
++        possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_xyz_pix_fmts);
++    } else {
++        switch (image->color_space) {
++        case OPJ_CLRSPC_SRGB:
++            possible_fmts    = libopenjpeg_rgb_pix_fmts;
++            possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_rgb_pix_fmts);
++            break;
++        case OPJ_CLRSPC_GRAY:
++            possible_fmts    = libopenjpeg_gray_pix_fmts;
++            possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_gray_pix_fmts);
++            break;
++        case OPJ_CLRSPC_SYCC:
++            possible_fmts    = libopenjpeg_yuv_pix_fmts;
++            possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_yuv_pix_fmts);
++            break;
++        default:
++            possible_fmts    = libopenjpeg_all_pix_fmts;
++            possible_fmts_nb = FF_ARRAY_ELEMS(libopenjpeg_all_pix_fmts);
++            break;
++        }
+     }
+ 
+     for (index = 0; index < possible_fmts_nb; ++index)
+-- 
+2.16.2
+
