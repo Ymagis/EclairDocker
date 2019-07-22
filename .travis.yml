@@ -13,5 +13,5 @@ install:
 
 script:
     - export VERSION="$(cat $IMAGE/version)"
-    - docker build -t $IMAGE .
+    - docker build -t $IMAGE $IMAGE/
     - bash .travis/docker-push.sh $ECR_URL $IMAGE $VERSION latest
